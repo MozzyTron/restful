@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -56,7 +57,8 @@ func (r *Router) HandleFunc(path string, f interface{}) *Route {
 // Cannot use Lambda here.
 func (r *Router) Handle(path string, handler http.Handler) *Route {
 	monitored := r.monitors.wrap(handler)
-	return newRoute(r.router.Handle(path, monitored), nil)
+	traced := otelhttp.NewHandler(monitored, "restful-instrumented")
+	return newRoute(r.router.Handle(path, traced), nil)
 }
 
 // Get returns the route registered with the given name, or nil.
