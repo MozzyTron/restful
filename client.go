@@ -20,6 +20,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -106,13 +107,14 @@ func NewClient() *Client {
 	t.MaxIdleConns = 100
 	t.MaxConnsPerHost = 100
 	t.MaxIdleConnsPerHost = 100
-
+	traced := otelhttp.NewTransport(t)
 	c := &Client{Kind: KindBasic}
 	c.Client = &http.Client{
 		Timeout:   10 * time.Second,
-		Transport: t,
+		Transport: traced,
 	}
 	c.acceptProblemJSON = true /* backward compatible */
+
 	return c
 }
 
